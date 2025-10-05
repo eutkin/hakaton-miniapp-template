@@ -14,6 +14,25 @@
 		reverse_proxy bff:3001
 	}
 
+	# Grafana Faro collector proxy to Alloy
+	handle /faro/* {
+		uri strip_prefix /faro
+		reverse_proxy alloy:12347
+	}
+
+	# OTLP endpoints for Alloy
+	handle /v1/traces {
+		reverse_proxy alloy:4318
+	}
+
+	handle /v1/logs {
+		reverse_proxy alloy:4318
+	}
+
+	handle /v1/metrics {
+		reverse_proxy alloy:4318
+	}
+
 	# Default to SPA
 	handle {
 		reverse_proxy spa:80

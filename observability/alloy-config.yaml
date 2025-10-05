@@ -1,6 +1,7 @@
 server:
   log_level: info
 
+# OTLP receiver for traces from BFF
 otelcol.receiver.otlp "default" {
   grpc {
     endpoint = "0.0.0.0:4317"
@@ -22,6 +23,34 @@ otelcol.processor.batch "default" {
 }
 
 otelcol.exporter.logging "default" {
+  verbosity           = "detailed"
+  sampling_initial    = 5
+  sampling_thereafter = 200
+}
+
+# Faro receiver for frontend telemetry
+faro.receiver "frontend" {
+  server {
+    listen_address = "0.0.0.0"
+    listen_port = 12347
+    cors_allowed_origins = ["*"]
+  }
+
+  output {
+    logs   = [loki.write.default.receiver]
+    traces = [otelcol.exporter.logging.faro.input]
+  }
+}
+
+# Loki for logs
+loki.write "default" {
+  endpoint {
+    url = "http://localhost:3100/loki/api/v1/push"
+  }
+}
+
+# Separate exporter for Faro traces
+otelcol.exporter.logging "faro" {
   verbosity           = "detailed"
   sampling_initial    = 5
   sampling_thereafter = 200

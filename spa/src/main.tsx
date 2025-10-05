@@ -5,6 +5,9 @@ import App from './App.tsx'
 import './index.css'
 import './i18n'
 import { oidcConfig } from './auth/oidc-config.ts'
+import { initFaro } from './lib/faro.ts'
+
+initFaro()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

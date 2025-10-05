@@ -14,6 +14,7 @@ services:
       - spa
       - static
       - bff
+      - alloy
     networks:
       - app-network
 
@@ -26,6 +27,7 @@ services:
       - VITE_OIDC_AUTHORITY=${OIDC_AUTHORITY:-https://your-sso-provider.com}
       - VITE_OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-your-client-id}
       - VITE_OIDC_REDIRECT_URI=${OIDC_REDIRECT_URI:-http://localhost/callback}
+      - VITE_FARO_URL=/faro/collect
     networks:
       - app-network
 
@@ -43,7 +45,7 @@ services:
     environment:
       - PORT=3001
       - MOCK_API_URL=http://mock-api:3002
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318/v1/traces
       - OTEL_SERVICE_NAME=bff
     depends_on:
       - mock-api
@@ -67,6 +69,7 @@ services:
     ports:
       - "12345:12345"
       - "4318:4318"
+      - "12347:12347"
     command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.yaml
     networks:
       - app-network
