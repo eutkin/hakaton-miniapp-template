@@ -1,0 +1,27 @@
+{
+  "app": {
+    "title": "Application Framework",
+    "welcome": "Welcome to the Application",
+    "login": "Login",
+    "logout": "Logout",
+    "loading": "Loading...",
+    "submit": "Submit",
+    "cancel": "Cancel"
+  },
+  "form": {
+    "title": "Submit Form",
+    "description": "Please fill out the form below",
+    "name": "Name",
+    "namePlaceholder": "Enter your name",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "message": "Message",
+    "messagePlaceholder": "Enter your message",
+    "success": "Form submitted successfully!",
+    "error": "An error occurred while submitting the form"
+  },
+  "auth": {
+    "pleaseLogin": "Please login to continue",
+    "loginRequired": "Authentication required"
+  }
+}

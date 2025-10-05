@@ -1,0 +1,64 @@
+import { create } from 'zustand'
+
+interface FormData {
+  name: string
+  email: string
+  message: string
+}
+
+interface AppState {
+  formData: FormData
+  isSubmitting: boolean
+  error: string | null
+  success: boolean
+  setFormData: (data: Partial<FormData>) => void
+  submitForm: (data: FormData) => Promise<void>
+  resetForm: () => void
+}
+
+export const useAppStore = create<AppState>((set) => ({
+  formData: {
+    name: '',
+    email: '',
+    message: '',
+  },
+  isSubmitting: false,
+  error: null,
+  success: false,
+  setFormData: (data) =>
+    set((state) => ({
+      formData: { ...state.formData, ...data },
+    })),
+  submitForm: async (data) => {
+    set({ isSubmitting: true, error: null, success: false })
+    try {
+      const response = await fetch('/api/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to submit form')
+      }
+
+      const result = await response.json()
+      set({ isSubmitting: false, success: true })
+      return result
+    } catch (error) {
+      set({
+        isSubmitting: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+      throw error
+    }
+  },
+  resetForm: () =>
+    set({
+      formData: { name: '', email: '', message: '' },
+      error: null,
+      success: false,
+    }),
+}))
