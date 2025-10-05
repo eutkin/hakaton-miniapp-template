@@ -8,7 +8,11 @@ app.use('*', logger())
 app.use('*', cors())
 
 app.get('/health', (c) => {
-  return c.json({ status: 'ok', service: 'mock-api' })
+  return c.json({ 
+    status: 'ok', 
+    service: 'mock-api',
+    timestamp: new Date().toISOString()
+  })
 })
 
 app.post('/api/process', async (c) => {
@@ -20,7 +24,7 @@ app.post('/api/process', async (c) => {
     await new Promise(resolve => setTimeout(resolve, 500))
 
     const response = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       status: 'processed',
       receivedData: body,
       processedAt: new Date().toISOString(),
@@ -46,10 +50,13 @@ app.post('/api/process', async (c) => {
   }
 })
 
-const port = parseInt(process.env.PORT || '3002')
-console.log(`Mock API server is running on port ${port}`)
+const port = parseInt(Deno.env.get('PORT') || '3002')
 
-export default {
-  port,
-  fetch: app.fetch,
-}
+console.log('═══════════════════════════════════════════════════════')
+console.log('  🎭 Mock API Service (Deno + Hono)')
+console.log('═══════════════════════════════════════════════════════')
+console.log(`  Port: ${port}`)
+console.log(`  Health: http://localhost:${port}/health`)
+console.log('═══════════════════════════════════════════════════════')
+
+Deno.serve({ port }, app.fetch)
