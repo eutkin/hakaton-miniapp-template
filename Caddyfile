@@ -1,0 +1,21 @@
+:80 {
+	# SPA routes
+	handle /app/* {
+		reverse_proxy spa:80
+	}
+
+	# Static content
+	handle /static/* {
+		reverse_proxy static:80
+	}
+
+	# BFF API
+	handle /api/* {
+		reverse_proxy bff:3001
+	}
+
+	# Default to SPA
+	handle {
+		reverse_proxy spa:80
+	}
+}

@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  caddy-proxy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - spa
+      - static
+      - bff
+    networks:
+      - app-network
+
+  spa:
+    build:
+      context: ./spa
+      dockerfile: Dockerfile
+    environment:
+      - VITE_BFF_URL=http://bff:3001
+      - VITE_OIDC_AUTHORITY=${OIDC_AUTHORITY:-https://your-sso-provider.com}
+      - VITE_OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-your-client-id}
+      - VITE_OIDC_REDIRECT_URI=${OIDC_REDIRECT_URI:-http://localhost/callback}
+    networks:
+      - app-network
+
+  static:
+    build:
+      context: ./static
+      dockerfile: Dockerfile
+    networks:
+      - app-network
+
+  bff:
+    build:
+      context: ./bff
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3001
+      - MOCK_API_URL=http://mock-api:3002
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
+      - OTEL_SERVICE_NAME=bff
+    depends_on:
+      - mock-api
+      - alloy
+    networks:
+      - app-network
+
+  mock-api:
+    build:
+      context: ./mock-api
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3002
+    networks:
+      - app-network
+
+  alloy:
+    image: grafana/alloy:latest
+    volumes:
+      - ./observability/alloy-config.yaml:/etc/alloy/config.yaml
+    ports:
+      - "12345:12345"
+      - "4318:4318"
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.yaml
+    networks:
+      - app-network
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  app-network:
+    driver: bridge
