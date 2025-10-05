@@ -1,4 +1,4 @@
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "deno-2.1", "deno-2"]
 [agent]
 expertMode = true
 
@@ -6,7 +6,33 @@ expertMode = true
 channel = "stable-25_05"
 
 [workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Documentation"
+
+[[workflows.workflow]]
+name = "Documentation"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "deno run --allow-net --allow-read --allow-env docs-server.ts"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 35123
+externalPort = 3000

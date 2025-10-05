@@ -1,40 +1,60 @@
 # Application Framework
 
-Полнофункциональный фреймворк для создания веб-приложений с микросервисной архитектурой.
+Полнофункциональный фреймворк для создания веб-приложений с микросервисной архитектурой на Deno.
 
 ## Архитектура
 
 Проект состоит из следующих сервисов:
 
 - **Caddy Proxy** - прокси-сервер для маршрутизации запросов
-- **SPA** - React 18+ приложение с TypeScript, Tailwind CSS, ShadCN/ui
+- **SPA** - React 18+ приложение с TypeScript, Tailwind CSS, ShadCN/ui, Grafana Faro
 - **Static** - сервер статического контента
-- **BFF** - Backend-for-Frontend на Hono + Bun с OpenTelemetry
-- **Mock API** - тестовый API сервис
-- **Grafana Alloy** - сбор телеметрии
+- **BFF** - Backend-for-Frontend на Hono + Deno с OpenTelemetry
+- **Mock API** - тестовый API сервис на Deno
+- **Grafana Alloy** - сбор телеметрии и логов
 
 ## Технологический стек
 
 ### Frontend (SPA)
 - React 18+
 - TypeScript
-- Vite
+- Vite (с Deno)
 - Tailwind CSS
 - ShadCN/ui компоненты
 - Zustand для управления состоянием
 - react-i18next для интернационализации (русский и английский)
 - react-oidc-context для SSO аутентификации
+- **Grafana Faro** для Real User Monitoring (RUM)
 
-### Backend (BFF)
-- Hono
-- Bun
-- OpenTelemetry для телеметрии
+### Backend (BFF & Mock API)
+- **Deno 2.1.4**
+- Hono framework
+- OpenTelemetry для трейсинга
 - Интеграция с Mock API
 
 ### Инфраструктура
 - Docker & Docker Compose v2
 - Caddy веб-сервер
 - Grafana Alloy для observability
+
+## Observability
+
+### OpenTelemetry (Backend)
+BFF автоматически отправляет traces в Grafana Alloy через OpenTelemetry:
+- Трейсинг всех HTTP запросов
+- Spans для внутренних операций
+- Отправка через OTLP/HTTP
+
+### Grafana Faro (Frontend)
+SPA интегрирован с Grafana Faro для мониторинга:
+- **Логи** - все console.log/error
+- **Трейсы** - навигация и загрузка страниц
+- **Метрики** - производительность и ошибки
+- **Проксирование через Caddy** - `/faro/*` → Alloy
+
+Конфигурация Caddy автоматически проксирует:
+- `/faro/collect` → Grafana Alloy (порт 12347)
+- `/v1/traces`, `/v1/logs`, `/v1/metrics` → Alloy OTLP endpoints
 
 ## Быстрый старт
 
@@ -47,25 +67,25 @@
 
 Создайте файл `.env` в корне проекта:
 
-\`\`\`bash
+```bash
 # OIDC Configuration
 OIDC_AUTHORITY=https://your-sso-provider.com
 OIDC_CLIENT_ID=your-client-id
 OIDC_REDIRECT_URI=http://localhost/callback
-\`\`\`
+```
 
 ### Запуск проекта
 
 1. Клонируйте репозиторий:
-\`\`\`bash
+```bash
 git clone <repository-url>
 cd <project-directory>
-\`\`\`
+```
 
 2. Запустите все сервисы:
-\`\`\`bash
+```bash
 docker-compose up --build
-\`\`\`
+```
 
 3. Откройте браузер и перейдите на `http://localhost`
 
@@ -74,40 +94,47 @@ docker-compose up --build
 - `http://localhost` - главное приложение (SPA)
 - `http://localhost/static` - статический контент
 - `http://localhost/api/*` - BFF API
+- `http://localhost/faro/collect` - Grafana Faro collector
 - `http://localhost:12345` - Grafana Alloy UI
 
 ## Структура проекта
 
-\`\`\`
+```
 .
 ├── docker-compose.yml          # Конфигурация Docker Compose
 ├── Caddyfile                   # Главная конфигурация Caddy прокси
 ├── spa/                        # React SPA приложение
 │   ├── Dockerfile
 │   ├── Caddyfile
+│   ├── deno.json
 │   ├── package.json
 │   └── src/
 │       ├── components/         # React компоненты
 │       ├── store/              # Zustand stores
 │       ├── i18n/               # Переводы (ru/en)
-│       └── auth/               # OIDC конфигурация
+│       ├── auth/               # OIDC конфигурация
+│       └── lib/
+│           └── faro.ts         # Grafana Faro setup
 ├── static/                     # Статический контент
 │   ├── Dockerfile
 │   ├── Caddyfile
 │   └── public/
-├── bff/                        # Backend-for-Frontend
+├── bff/                        # Backend-for-Frontend (Deno)
 │   ├── Dockerfile
-│   ├── package.json
+│   ├── deno.json
 │   └── src/
 │       ├── index.ts
-│       └── telemetry.ts        # OpenTelemetry настройка
-├── mock-api/                   # Mock API сервис
+│       ├── index.test.ts       # Тесты
+│       └── telemetry.ts        # OpenTelemetry
+├── mock-api/                   # Mock API сервис (Deno)
 │   ├── Dockerfile
-│   ├── package.json
+│   ├── deno.json
 │   └── src/
+│       ├── index.ts
+│       └── index.test.ts       # Тесты
 └── observability/
     └── alloy-config.yaml       # Grafana Alloy конфигурация
-\`\`\`
+```
 
 ## Функционал приложения
 
@@ -121,30 +148,42 @@ docker-compose up --build
 3. Ответ возвращается пользователю
 
 ### Телеметрия
-BFF автоматически отправляет traces в Grafana Alloy через OpenTelemetry.
+- **Backend**: BFF отправляет traces в Grafana Alloy через OpenTelemetry
+- **Frontend**: SPA отправляет логи, трейсы и метрики через Grafana Faro
+
+## Тестирование
+
+### BFF тесты
+```bash
+cd bff
+deno task test
+```
+
+### Mock API тесты
+```bash
+cd mock-api
+deno task test
+```
 
 ## Разработка
 
-### Разработка SPA
-\`\`\`bash
-cd spa
-npm install
-npm run dev
-\`\`\`
-
-### Разработка BFF
-\`\`\`bash
+### Разработка BFF (Deno)
+```bash
 cd bff
-bun install
-bun run dev
-\`\`\`
+deno task dev
+```
 
-### Разработка Mock API
-\`\`\`bash
+### Разработка Mock API (Deno)
+```bash
 cd mock-api
-bun install
-bun run dev
-\`\`\`
+deno task dev
+```
+
+### Разработка SPA
+```bash
+cd spa
+deno task dev
+```
 
 ## Смена языка
 
@@ -152,14 +191,14 @@ bun run dev
 
 ## Остановка проекта
 
-\`\`\`bash
+```bash
 docker-compose down
-\`\`\`
+```
 
 Для удаления volumes:
-\`\`\`bash
+```bash
 docker-compose down -v
-\`\`\`
+```
 
 ## Лицензия
 
