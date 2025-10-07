@@ -4,7 +4,6 @@ import { useAppStore } from '@/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Card,
   CardContent,
@@ -58,32 +57,6 @@ export function SubmitForm() {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">{t('form.email')}</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder={t('form.emailPlaceholder')}
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="message">{t('form.message')}</Label>
-            <Textarea
-              id="message"
-              placeholder={t('form.messagePlaceholder')}
-              value={formData.message}
-              onChange={(e) =>
-                setFormData({ ...formData, message: e.target.value })
-              }
-              required
-            />
-          </div>
-
           {error && (
             <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm">
               {t('form.error')}: {error}

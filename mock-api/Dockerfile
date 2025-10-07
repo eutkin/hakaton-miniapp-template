@@ -1,12 +1,17 @@
-FROM denoland/deno:2.1.4
+# Используем официальный образ Deno
+FROM denoland/deno:2.5.3
 
 WORKDIR /app
 
-COPY deno.json ./
+# Копируем конфиг и зависимости
+COPY deno.json deno.json
+
 RUN deno install
 
-COPY . .
+COPY src/ src/
 
-EXPOSE 3002
+# Предварительно кэшируем зависимости
+RUN deno cache src/index.ts
 
-CMD ["deno", "task", "start"]
+# Запуск
+CMD ["deno", "run", "--allow-net", "--allow-env", "--allow-read", "src/index.ts"]

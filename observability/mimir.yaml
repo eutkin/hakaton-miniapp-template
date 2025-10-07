@@ -1,0 +1,40 @@
+# mimir-config.yaml
+
+# Включаем single-binary режим (для dev/тестов)
+multitenancy_enabled: false
+
+# Настройки сервера
+server:
+  http_listen_port: 9009
+  log_level: info
+
+# Настройки хранилища
+common:
+  storage:
+    backend: filesystem
+    filesystem:
+      dir: /var/mimir/
+
+ruler:
+  rule_path: ./rule
+
+blocks_storage:
+  backend: filesystem
+  filesystem:
+    dir: ./blocks
+# Настройки дистрибьютора (приём метрик)
+distributor:
+  ring:
+    kvstore:
+      store: memberlist
+
+# Настройки инжектора (хранение метрик)
+ingester:
+  ring:
+    kvstore:
+      store: memberlist
+    replication_factor: 1  # для single-binary
+
+# Настройки квериера (чтение метрик)
+querier:
+  max_concurrent: 20

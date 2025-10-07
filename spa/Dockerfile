@@ -1,14 +1,19 @@
-FROM denoland/deno:2.1.4 AS builder
+# Stage 1: Сборка
+FROM node:24.9.0 AS builder
 
 WORKDIR /app
 
+# Установка зависимостей
 COPY package*.json ./
 
-RUN deno install -g npm:npm@latest && \
-    npm ci
+# 🔥 Устанавливаем Rollup и его ARM64-бинарник ВРУЧНУЮ
+RUN npm install --save-prod @rollup/rollup-linux-arm64-gnu
+RUN npm ci
 
+# Копирование исходного кода
 COPY . .
 
+# Сборка
 RUN npm run build
 
 FROM caddy:2-alpine

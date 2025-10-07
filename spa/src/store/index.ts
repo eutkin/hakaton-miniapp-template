@@ -2,8 +2,6 @@ import { create } from 'zustand'
 
 interface FormData {
   name: string
-  email: string
-  message: string
 }
 
 interface AppState {
@@ -57,7 +55,7 @@ export const useAppStore = create<AppState>((set) => ({
   },
   resetForm: () =>
     set({
-      formData: { name: '', email: '', message: '' },
+      formData: { name: '' },
       error: null,
       success: false,
     }),

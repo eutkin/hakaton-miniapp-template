@@ -1,48 +1,62 @@
-// src/telemetry.ts
-import {
-    diag,
-    DiagConsoleLogger,
-    DiagLogLevel,
-} from "@opentelemetry/api";
-import { NodeSDK } from "@opentelemetry/sdk-node";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
-import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
-import { Resource } from "@opentelemetry/resources";
-import {
-    SEMRESATTRS_SERVICE_NAME,
-    SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
-} from "@opentelemetry/semantic-conventions";
+// src/main.ts
+// 🔥 Импортируем telemetry первым
+import "./telemetry.ts";
 
-// Включить логирование OTel (опционально)
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import {serve} from "@hono/node-server"
 
-const sdk = new NodeSDK({
-    resource: new Resource({
-        [SEMRESATTRS_SERVICE_NAME]: "bff",
-        [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]:
-            Deno.env.get("ENVIRONMENT") || "development",
-    }),
-    traceExporter: new OTLPTraceExporter({
-        url: Deno.env.get("OTEL_EXPORTER_OTLP_ENDPOINT") || "http://alloy:4317",
-    }),
-    instrumentations: [
-        new HttpInstrumentation({
-            // Автоматически трассировать HTTP-запросы
-            applyCustomAttributesOnSpan: (span, request, response) => {
-                span.setAttribute("http.host", request.headers.get("host") || "");
-                if (response) {
-                    span.setAttribute("http.status_code", response.status);
-                }
-            },
-        }),
-    ],
+const app = new Hono();
+
+
+// CORS
+app.use("*", cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+}));
+
+// Health check
+app.get("/health", (c) => {
+    return c.json({
+        status: "ok",
+        service: "bff-node",
+        timestamp: new Date().toISOString(),
+    });
 });
 
-sdk.start();
+// Пример API-эндпоинта
+app.post("/api/submit", async (c) => {
+    const body = await c.req.json();
+    console.log("Received form data:", body);
 
-// Graceful shutdown
-addEventListener("beforeunload", () => {
-    sdk.shutdown();
+    const mockApiUrl = process.env.MOCK_API_URL;
+
+    const response = await fetch(`${mockApiUrl}/api/process`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+        return c.json({ error: `Upstream error: ${response.status}` }, 502);
+    }
+
+    const result = await response.json();
+
+    console.log("Mock API response:", result);
+
+    return c.json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+    });
 });
 
-export default sdk;
+const port = parseInt(process.env.PORT || "3001");
+
+console.log(`🚀 BFF Service (Node.js) listening on port ${port}`);
+
+serve ({ fetch: app.fetch, port });
