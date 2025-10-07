@@ -1,7 +1,5 @@
-server:
-  log_level: info
 
-# OTLP receiver for traces from BFF
+// OTLP receiver for traces from BFF
 otelcol.receiver.otlp "default" {
   grpc {
     endpoint = "0.0.0.0:4317"
@@ -28,7 +26,7 @@ otelcol.exporter.logging "default" {
   sampling_thereafter = 200
 }
 
-# Faro receiver for frontend telemetry
+// Faro receiver for frontend telemetry
 faro.receiver "frontend" {
   server {
     listen_address = "0.0.0.0"
