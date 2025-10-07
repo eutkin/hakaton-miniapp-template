@@ -18,22 +18,20 @@ export function SubmitForm() {
   const { submitForm, isSubmitting, error, success, resetForm } = useAppStore()
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
-    message: '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       await submitForm(formData)
-      setFormData({ name: '', email: '', message: '' })
+      setFormData({ name: '' })
     } catch (err) {
       console.error('Form submission error:', err)
     }
   }
 
   const handleReset = () => {
-    setFormData({ name: '', email: '', message: '' })
+    setFormData({ name: ''})
     resetForm()
   }
 

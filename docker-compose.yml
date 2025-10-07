@@ -41,6 +41,7 @@ services:
       context: ./bff
       dockerfile: Dockerfile
     environment:
+      - BOT_TOKEN=504304686:AAHhdm7-5w57S16C1txDR-l53xh9WIJoFg0
       - PORT=3001
       - MOCK_API_URL=http://mock-api:3002
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317

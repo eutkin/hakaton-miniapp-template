@@ -2,9 +2,10 @@
 // 🔥 Импортируем telemetry первым
 import "./telemetry.ts";
 
-import { Hono } from "hono";
-import { cors } from "hono/cors";
+import {Hono} from "hono";
+import {cors} from "hono/cors";
 import {serve} from "@hono/node-server"
+import {parse, validate} from '@tma.js/init-data-node';
 
 const app = new Hono();
 
@@ -15,6 +16,42 @@ app.use("*", cors({
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
 }));
+
+const botToken = process.env.BOT_TOKEN
+
+app.use("*", async (c, next) => {
+    const initData = c.req.header('X-Init-Data');
+    if (initData && botToken) {
+        try {
+            validate(initData, botToken)
+
+            const initDataParsed = parse(initData);
+
+            const userId = initDataParsed.user?.id
+
+            if (!userId) {
+                return c.json({ error: "Unauthorized: User ID not found" }, 403);
+            }
+
+            const newHeaders = new Headers(c.req.raw.headers);
+            newHeaders.delete("X-Init-Data");
+            newHeaders.set("X-Telegram-User-ID", userId.toString());
+
+            // Создаём новый Request с новыми заголовками
+            c.req.raw = new Request(c.req.raw, {
+                headers: newHeaders,
+            })
+        } catch (e ) {
+            return c.json({error: "Unauthorized: No init data" }, 401);
+        }
+    }
+    await next()
+})
+
+app.use("*", async (c, next) => {
+    console.log(c.req.header('X-Telegram-User-Id'))
+    await next()
+})
 
 // Health check
 app.get("/health", (c) => {
